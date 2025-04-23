@@ -22,3 +22,13 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+### Install cookies
+```
+npm i vue-cookies
+```
+
+### Install sesion package
+```
+npm i vue-session
+```

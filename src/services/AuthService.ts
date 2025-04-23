@@ -2,22 +2,26 @@ import { Ref, ref } from "vue";
 import {
   createUserWithEmailAndPassword,
   getAuth,
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
   updatePassword,
 } from "firebase/auth";
 import { GoogleAuthProvider } from "firebase/auth";
 import Swal from "sweetalert2";
+import CookieServices from "./CookiesService";
 
 export default class AuthServices {
   private jwt: Ref<string>;
   private error: Ref<string>;
   private auth = getAuth();
   private provider = new GoogleAuthProvider();
+  private cookieService: CookieServices;
 
   constructor() {
     this.jwt = ref("");
     this.error = ref("");
+    this.cookieService = new CookieServices();
   }
 
   getJwt(): Ref<string> {
@@ -27,6 +31,20 @@ export default class AuthServices {
     return this.error;
   }
 
+  getUser(){
+    onAuthStateChanged(this.auth, (user) => {
+      if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/auth.user
+        const uid = user.uid;
+       
+        // ...
+      } else {
+        // User is signed out
+        // ...
+      }
+    });
+  }
   login(email: string, password: string) {
     signInWithEmailAndPassword(this.auth, email, password)
       .then((userCredential: { user: any }) => {
@@ -43,7 +61,6 @@ export default class AuthServices {
         const errorMessage = error.message;
 
         this.showError(errorCode, errorMessage);
-
       });
   }
 
@@ -57,7 +74,6 @@ export default class AuthServices {
           "Registro éxitoso!",
           "Se ha registrado de manera éxitosa."
         );
-        
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -65,7 +81,6 @@ export default class AuthServices {
         // ..
 
         this.showError(errorCode, errorMessage);
-
       });
   }
 
@@ -84,8 +99,10 @@ export default class AuthServices {
         .catch((error) => {
           // An error ocurred
           // ...
-          this.showError('Ha ocurrido un error', 'Lo sentimos ha ocurrido un error.');
-
+          this.showError(
+            "Ha ocurrido un error",
+            "Lo sentimos ha ocurrido un error."
+          );
         });
   }
 
@@ -96,6 +113,8 @@ export default class AuthServices {
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const token = credential?.accessToken;
         // The signed-in user info.
+        if (token) this.cookieService.setCookie("auth", token);
+
         const user = result.user;
         // IdP data available using getAdditionalUserInfo(result)
         // ...
